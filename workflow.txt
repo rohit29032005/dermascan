@@ -1,0 +1,13 @@
+here is the guide for derma-ai
+
+to start the production first
+frontend- npm run dev
+backend- python -m uvicorn main:app --reload --port 8000
+super-admin=http://localhost:3000/super-admin
+user=Rohit
+password=29032005
+admin   -http://localhost:3000/admin-dashboard
+doctor - http://localhost:3000/doctor-dashboard
+user - http://localhost:3000/
+to see the images in cloudinary - https://console.cloudinary.com/app/c-5a386a3e6d500f0f59c242f68c0641/assets/media_library/folders/ced00cf13289762d223ab5930a6950f04c?view_mode=mosaic
+firebase for the action of user an all 

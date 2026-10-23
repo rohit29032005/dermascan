@@ -1,0 +1,14 @@
+fastapi
+uvicorn
+python-multipart
+python-dotenv
+torch
+torchvision
+Pillow
+grad-cam
+opencv-python
+qdrant-client
+firebase-admin
+cloudinary
+openai
+httpx

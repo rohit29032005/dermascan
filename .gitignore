@@ -1,0 +1,51 @@
+# Environment files
+.env
+.env.*
+!.env.example
+backend/.env
+frontend/.env.local
+frontend/.env.*.local
+
+# Sensitive credentials & secrets
+passkeys.txt
+serviceAccountKey.json
+backend/serviceAccountKey.json
+*.pem
+*.key
+
+# Python / Backend
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+backend/.venv/
+.venv/
+env/
+venv/
+ENV/
+backend/qdrant_storage/
+backend/images/
+*.log
+
+# ML Training Data & Datasets
+ml/dataset/images/
+*.zip
+*.tar.gz
+*.tar
+
+# Node / Frontend
+frontend/node_modules/
+frontend/.next/
+frontend/.firebase/
+.firebase/
+frontend/out/
+frontend/.vercel/
+frontend/*.tsbuildinfo
+
+# OS / Editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+~$*.pptx

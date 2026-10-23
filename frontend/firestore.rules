@@ -1,0 +1,42 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isDoctorOrAdmin() {
+      return isAuthenticated() && (
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['doctor', 'admin']
+      );
+    }
+
+    // Users Collection & Subcollections (Chats / Messages)
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow write: if isOwner(userId) || isDoctorOrAdmin();
+      
+      match /chats/{chatId} {
+        allow read, write: if isOwner(userId);
+
+        match /messages/{messageId} {
+          allow read, write: if isOwner(userId);
+        }
+      }
+    }
+
+    // Dataset Images Collection (for clinical active learning & review)
+    match /dataset_images/{imageId} {
+      allow read, write: if isAuthenticated();
+    }
+
+  }
+}
