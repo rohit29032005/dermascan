@@ -12,3 +12,7 @@ firebase-admin
 cloudinary
 openai
 httpx
+email-validator
+pymongo
+bcrypt
+python-jose[cryptography]
