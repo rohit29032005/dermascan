@@ -21,18 +21,25 @@ def init_firebase():
                 print("[Firebase] Initialized with FIREBASE_CREDENTIALS_JSON string.")
                 return
 
-            # 2. Try file path
-            if os.path.exists(SERVICE_ACCOUNT_PATH):
-                cred = credentials.Certificate(SERVICE_ACCOUNT_PATH)
-                firebase_admin.initialize_app(cred)
-                print(f"[Firebase] Initialized with Service Account JSON file ({SERVICE_ACCOUNT_PATH}).")
-                return
+            # 2. Try file paths (including Render Secret Files at /etc/secrets/serviceAccountKey.json)
+            possible_paths = [
+                SERVICE_ACCOUNT_PATH,
+                "/etc/secrets/serviceAccountKey.json",
+                os.path.join(os.getcwd(), "serviceAccountKey.json")
+            ]
+            for path in possible_paths:
+                if path and os.path.exists(path):
+                    cred = credentials.Certificate(path)
+                    firebase_admin.initialize_app(cred)
+                    print(f"[Firebase] Initialized with Service Account JSON file ({path}).")
+                    return
 
             # 3. Fallback to Application Default Credentials (GCP / Cloud Run native IAM)
             firebase_admin.initialize_app()
             print("[Firebase] Initialized with Application Default Credentials (GCP native).")
         except Exception as e:
             print(f"[Firebase] Initialization error: {e}")
+            raise
 
 init_firebase()
 
