@@ -257,8 +257,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Copy dependency list
 COPY requirements.txt .
 
+# Upgrade pip to avoid build dependency isolation issues
+RUN pip install --no-cache-dir --upgrade pip
+
 # Install PyTorch CPU first to avoid heavy CUDA wheels
-RUN pip install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cpu
+RUN pip install --no-cache-dir torch torchvision --extra-index-url https://download.pytorch.org/whl/cpu
 
 # Install remaining dependencies
 RUN pip install --no-cache-dir -r requirements.txt

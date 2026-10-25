@@ -13,19 +13,22 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
+# Upgrade pip to avoid build dependency isolation issues
+RUN pip install --no-cache-dir --upgrade pip
+
 # Copy dependency requirements
 COPY requirements.txt .
 
-# Install PyTorch CPU first to avoid heavy CUDA wheels (saves ~3GB)
-RUN pip install --no-cache-dir torch torchvision --index-url https://download.pytorch.org/whl/cpu
+# Install PyTorch CPU using --extra-index-url (keeps PyPI available for build tools like flit_core)
+RUN pip install --no-cache-dir torch torchvision --extra-index-url https://download.pytorch.org/whl/cpu
 
 # Install remaining dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt --extra-index-url https://download.pytorch.org/whl/cpu
 
 # Copy backend source code including weights
 COPY . .
 
 EXPOSE 8080
 
-# Cloud Run uses PORT environment variable
+# Render and Cloud Run both provide the PORT environment variable
 CMD exec uvicorn main:app --host 0.0.0.0 --port ${PORT} --workers 1
