@@ -46,12 +46,15 @@ async def upload_image(
         disease, confidence = predict_image(temp_path)
 
         # 5. Heatmap Generation
+        heatmap_url = None
         try:
-            predicted_idx = label_names.index(disease)
-        except ValueError:
-            predicted_idx = 0
-            
-        heatmap_url = generate_heatmap(temp_path, predicted_idx, user_id=user_id, chat_id=chat_id)
+            try:
+                predicted_idx = label_names.index(disease)
+            except ValueError:
+                predicted_idx = 0
+            heatmap_url = generate_heatmap(temp_path, predicted_idx, user_id=user_id, chat_id=chat_id)
+        except Exception as heat_err:
+            print(f"[GradCAM Warning] Failed to generate heatmap (continuing analysis): {heat_err}")
 
         # 6. Feature Extraction (Vector)
         vector = extract_features(temp_path)

@@ -56,6 +56,11 @@ def generate_heatmap(image_path: str, predicted_class: int, user_id: str, chat_i
     # Outside the 'with' block, the file handle is closed, so cv2 can write to it safely.
     cv2.imwrite(heatmap_path, cv2.cvtColor(visualization, cv2.COLOR_RGB2BGR))
 
+    # Free tensor memory immediately
+    del input_tensor, visualization, rgb_img, gcam, grayscale_cam
+    import gc
+    gc.collect()
+
     # Upload to Cloudinary
     try:
         folder_path = f"derma_heatmaps/{user_id}/{chat_id}"

@@ -7,6 +7,12 @@ import torch.nn as nn
 import os
 from pathlib import Path
 
+# Limit PyTorch to 1 CPU thread to prevent memory bloat on constrained containers (Render 512MB RAM)
+try:
+    torch.set_num_threads(1)
+except Exception:
+    pass
+
 # ────────────────────────────────────────────────
 # Model Loading (EfficientNet B0)
 # ────────────────────────────────────────────────
