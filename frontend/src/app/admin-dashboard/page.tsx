@@ -285,6 +285,11 @@ function AdminPanelContent() {
                           </span>
                         )}
                       </div>
+                      <div className="flex items-center gap-2 mt-2">
+                        <span className="text-xs px-2.5 py-1 rounded-full bg-purple-500/20 text-purple-300 border border-purple-500/30 font-bold">
+                          📊 Similar Cases Reported: {images.filter(i => (i.prediction || i.verified_label) === (selectedImage.prediction || selectedImage.verified_label)).length} cases in database
+                        </span>
+                      </div>
                     </div>
 
                     <div className="flex-1 max-w-sm">

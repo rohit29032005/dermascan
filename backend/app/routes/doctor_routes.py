@@ -55,6 +55,27 @@ async def doctor_upload(
             "created_at": datetime.utcnow()
         })
 
+        # 5. Extract and store vector in Qdrant for reference similarity search
+        try:
+            from app.services.ml_service import extract_features
+            from app.services.vector_service import store_vector
+            vector = extract_features(temp_path)
+            store_vector(
+                image_id=inserted_id,
+                vector=vector,
+                payload={
+                    "disease": label,
+                    "confidence": 100.0,
+                    "user_id": user_id,
+                    "image_url": secure_url,
+                    "is_verified": True,
+                    "source": "doctor",
+                    "created_at": datetime.utcnow().isoformat()
+                }
+            )
+        except Exception as v_err:
+            print(f"[Doctor Upload Vector Warning] {v_err}")
+
         if temp_path and os.path.exists(temp_path):
             os.unlink(temp_path)
 

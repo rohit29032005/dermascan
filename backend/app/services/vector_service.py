@@ -158,23 +158,37 @@ def store_vector(
 
 def search_similar(
     query_vector: List[float],
-    limit: int = 5
+    limit: int = 5,
+    exclude_image_id: str = None
 ) -> List[Dict]:
     """
-    Search for similar vectors in Qdrant
+    Search for similar vectors in Qdrant with support for both query_points and search.
     """
     try:
-        # Use search for broader compatibility in Local Mode
-        results = client.search(
-            collection_name=COLLECTION_NAME,
-            query_vector=query_vector,
-            limit=limit,
-            with_payload=True
-        )
+        fetch_limit = limit + 2 if exclude_image_id else limit
+        hits = []
+
+        if hasattr(client, "query_points"):
+            response = client.query_points(
+                collection_name=COLLECTION_NAME,
+                query=query_vector,
+                limit=fetch_limit,
+                with_payload=True
+            )
+            hits = response.points if hasattr(response, "points") else response
+        elif hasattr(client, "search"):
+            hits = client.search(
+                collection_name=COLLECTION_NAME,
+                query_vector=query_vector,
+                limit=fetch_limit,
+                with_payload=True
+            )
+        else:
+            print("[Qdrant Search Error] Neither query_points nor search method found on Qdrant client")
+            return []
 
         formatted = []
-        for hit in results:
-            # Helper to extract values from both objects and dicts
+        for hit in hits:
             try:
                 if isinstance(hit, dict):
                     score = hit.get("score")
@@ -185,25 +199,79 @@ def search_similar(
                     pid = getattr(hit, "id", None)
                     payload = getattr(hit, "payload", {}) or {}
 
+                img_id = payload.get("image_id")
+                # Filter out current uploaded image if requested
+                if exclude_image_id and img_id == exclude_image_id:
+                    continue
+
+                raw_score = float(score) if score is not None else 0.0
+                # Cosine similarity in Qdrant ranges from -1 to 1; for non-negative embeddings normalize to 0-100%
+                sim_percent = round(max(0.0, min(1.0, raw_score)) * 100, 1)
+
                 formatted.append({
-                    "score": score,
+                    "score": sim_percent,
+                    "similarity": sim_percent,
+                    "raw_score": raw_score,
                     "point_id": str(pid),
-                    "image_id": payload.get("image_id"),
+                    "image_id": img_id,
                     "disease": payload.get("disease"),
                     "confidence": payload.get("confidence"),
+                    "image_url": payload.get("image_url"),
+                    "is_verified": payload.get("is_verified", False),
+                    "source": payload.get("source", "user"),
                 })
+
+                if len(formatted) >= limit:
+                    break
+
             except Exception as item_err:
                 print(f"[Qdrant] Skipping malformed hit: {item_err}")
                 continue
 
-        print(f"[Qdrant] Found {len(formatted)} similar cases")
+        print(f"[Qdrant] Found {len(formatted)} similar cases (requested limit={limit})")
         return formatted
 
     except Exception as e:
         print(f"[Qdrant Search Error] {str(e)}")
-        # If it truly is a dictionary access error at this level, log exactly why
         import traceback
         traceback.print_exc()
         return []
-    
-    
+
+
+def count_similar_cases(disease: str = None) -> int:
+    """
+    Count points matching a disease in Qdrant (or total points if disease is None).
+    """
+    try:
+        if not client.collection_exists(COLLECTION_NAME):
+            return 0
+        if disease:
+            from qdrant_client.models import Filter, FieldCondition, MatchValue
+            cnt = client.count(
+                collection_name=COLLECTION_NAME,
+                count_filter=Filter(must=[FieldCondition(key="disease", match=MatchValue(value=disease))])
+            )
+            return cnt.count
+        else:
+            cnt = client.count(collection_name=COLLECTION_NAME)
+            return cnt.count
+    except Exception as e:
+        print(f"[Qdrant Count Error] {e}")
+        return 0
+
+
+def get_similar_cases_overview(disease: str = None) -> Dict[str, Any]:
+    """
+    Get high-level summary of similar cases in Qdrant repository.
+    """
+    try:
+        total = count_similar_cases()
+        matching = count_similar_cases(disease) if disease else total
+        return {
+            "total_repository_cases": total,
+            "disease_reported_cases": matching,
+            "disease": disease
+        }
+    except Exception as e:
+        print(f"[Qdrant Overview Error] {e}")
+        return {"total_repository_cases": 0, "disease_reported_cases": 0, "disease": disease}

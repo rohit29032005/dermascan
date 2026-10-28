@@ -51,6 +51,10 @@ async def handle_chat(request: ChatMessageRequest, user_id: str = Depends(get_cu
         context = "We are analyzing a skin condition."
         if latest_image:
             context += f" The ML model predicts {latest_image.get('prediction', 'Unknown')} with {latest_image.get('confidence', 0)}% confidence.\n"
+            if latest_image.get('similar_cases_reported'):
+                context += f" Historical clinical database reports: {latest_image.get('similar_cases_reported')} total similar cases recorded for this condition.\n"
+            if latest_image.get('similar_cases_found'):
+                context += f" Vector similarity search identified: {latest_image.get('similar_cases_found')} visually similar reference cases.\n"
             
         if request.questionnaire:
             context += f" Patient details: Age {request.questionnaire.get('age')}, Gender {request.questionnaire.get('gender')}, Area: {request.questionnaire.get('location')}, Duration: {request.questionnaire.get('duration')} days, Itch/Pain Form Scale: {request.questionnaire.get('painScale')}.\n"
